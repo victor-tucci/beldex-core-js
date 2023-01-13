@@ -17,8 +17,8 @@
     "cache": false
   },
   "napa": {
-    "@mymonero/mymonero-core-cpp": "git+https://github.com/mymonero/mymonero-core-cpp",
-    "@mymonero/mymonero-core-custom": "git+https://github.com/mymonero/monero-core-custom"
+    "@mymonero/beldex-core-cpp": "git+https://github.com/victor-tucci/beldex-core-cpp",
+    "@mymonero/beldex-core-custom": "git+https://github.com/victor-tucci/beldex-core-custom"
   },
   "keywords": [
     "monero",

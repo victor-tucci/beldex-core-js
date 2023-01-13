@@ -39,7 +39,7 @@
 #include <unordered_map>
 #include <memory>
 //
-#include "string_tools.h"
+#include "epee/string_tools.h"
 //
 #include "monero_fork_rules.hpp"
 #include "monero_send_routine.hpp"
@@ -72,7 +72,7 @@ struct Send_Task_AsyncContext
 	string sec_viewKey_string;
 	string sec_spendKey_string;
 	string to_address_string;
-	optional<string> payment_id_string;
+	boost::optional<string> payment_id_string;
 	vector<uint64_t> sending_amounts;
 	bool is_sweeping;
 	uint32_t simple_priority;
@@ -81,6 +81,7 @@ struct Send_Task_AsyncContext
 	//
 	vector<SpendableOutput> unspent_outs;
 	uint64_t fee_per_b;
+	uint64_t fee_per_o;
 	uint64_t fee_mask;
 	monero_fork_rules::use_fork_rules_fn_type use_fork_rules;
 	//
@@ -90,23 +91,23 @@ struct Send_Task_AsyncContext
 	public_key pub_spendKey;
 	//
 	// re-entry params
-	optional<uint64_t> passedIn_attemptAt_fee;
+	boost::optional<uint64_t> passedIn_attemptAt_fee;
 	size_t constructionAttempt;
 	//
 	_Send_Task_ValsState valsState;
 	//
 	// step1_retVals held for step2 - making them optl for increased safety
-	optional<uint64_t> step1_retVals__final_total_wo_fee;
-	optional<uint64_t> step1_retVals__change_amount;
-	optional<uint64_t> step1_retVals__using_fee;
-	optional<uint32_t> step1_retVals__mixin;
+	boost::optional<uint64_t> step1_retVals__final_total_wo_fee;
+	boost::optional<uint64_t> step1_retVals__change_amount;
+	boost::optional<uint64_t> step1_retVals__using_fee;
+	boost::optional<uint32_t> step1_retVals__mixin;
 	vector<SpendableOutput> step1_retVals__using_outs;
 	//
 	// step2_retVals held for submit tx - optl for increased safety
-	optional<string> step2_retVals__signed_serialized_tx_string;
-	optional<string> step2_retVals__tx_hash_string;
-	optional<string> step2_retVals__tx_key_string;
-	optional<string> step2_retVals__tx_pub_key_string;
+	boost::optional<string> step2_retVals__signed_serialized_tx_string;
+	boost::optional<string> step2_retVals__tx_hash_string;
+	boost::optional<string> step2_retVals__tx_key_string;
+	boost::optional<string> step2_retVals__tx_pub_key_string;
 };
 //
 typedef std::unordered_map<string, Send_Task_AsyncContext *> context_map;
@@ -241,7 +242,7 @@ void emscr_async_bridge::send_funds(const string &args_string)
 	//
 	uint64_t _raw_sending_amount = stoull(json_root.get<string>("sending_amount"));
 	auto is_sweeping = json_root.get<bool>("is_sweeping");
-	optional<string> unlock_time_string = json_root.get_optional<string>("unlock_time");
+	boost::optional<string> unlock_time_string = json_root.get_optional<string>("unlock_time");
 	uint64_t unlock_time = 0;
 	if (unlock_time_string) {
 		unlock_time = stoull(*unlock_time_string);
@@ -289,6 +290,7 @@ void emscr_async_bridge::send_funds(const string &args_string)
 		//
 		unspent_outs, // this gets pushed to after getting unspent outs
 		0, // fee_per_b - this gets set after getting unspent outs
+		0, // fee_per_o - this gets set after getting unspent outs
 		0, // fee_mask - this gets set after getting unspent outs
 		monero_fork_rules::make_use_fork_rules_fn(0), // this will get set again after getting unspent outs - though it's slightly unsafe to set it to 0 like this 
 		//
@@ -386,6 +388,7 @@ void emscr_async_bridge::send_cb_I__got_unspent_outs(const string &args_string)
 	THROW_WALLET_EXCEPTION_IF(ptrTo_taskAsyncContext->unspent_outs.size() != 0, error::wallet_internal_error, "Expected 0 ptrTo_taskAsyncContext->unspent_outs in cb I");
 	ptrTo_taskAsyncContext->unspent_outs = std::move(*(parsed_res.unspent_outs)); // move structs from stack's vector to heap's vector
 	ptrTo_taskAsyncContext->fee_per_b = *(parsed_res.per_byte_fee); 
+	ptrTo_taskAsyncContext->fee_per_o = *(parsed_res.fee_per_output);
 	ptrTo_taskAsyncContext->fee_mask = *(parsed_res.fee_mask);
 	ptrTo_taskAsyncContext->use_fork_rules = monero_fork_rules::make_use_fork_rules_fn(parsed_res.fork_version);
 	_reenterable_construct_and_send_tx(task_id);
@@ -409,6 +412,7 @@ void emscr_async_bridge::_reenterable_construct_and_send_tx(const string &task_i
 		ptrTo_taskAsyncContext->use_fork_rules,
 		ptrTo_taskAsyncContext->unspent_outs,
 		ptrTo_taskAsyncContext->fee_per_b,
+		ptrTo_taskAsyncContext->fee_per_o,
 		ptrTo_taskAsyncContext->fee_mask,
 		//
 		ptrTo_taskAsyncContext->passedIn_attemptAt_fee // use this for passing step2 "must-reconstruct" return values back in, i.e. re-entry; when none, defaults to attempt at network min
@@ -499,6 +503,7 @@ void emscr_async_bridge::send_cb_II__got_random_outs(const string &args_string)
 		ptrTo_taskAsyncContext->simple_priority,
 		ptrTo_taskAsyncContext->step1_retVals__using_outs,
 		ptrTo_taskAsyncContext->fee_per_b,
+		ptrTo_taskAsyncContext->fee_per_o,
 		ptrTo_taskAsyncContext->fee_mask,
 		*(parsed_res.mix_outs),
 		ptrTo_taskAsyncContext->use_fork_rules,
@@ -601,7 +606,7 @@ void emscr_async_bridge::send_cb_III__submitted_tx(const string &args_string)
 	success_retVals.total_sent = *(ptrTo_taskAsyncContext->step1_retVals__final_total_wo_fee) + *(ptrTo_taskAsyncContext->step1_retVals__using_fee);
 	success_retVals.mixin = *(ptrTo_taskAsyncContext->step1_retVals__mixin);
 	{
-		optional<string> returning__payment_id = ptrTo_taskAsyncContext->payment_id_string; // separated from submit_raw_tx_fn so that it can be captured w/o capturing all of args
+		boost::optional<string> returning__payment_id = ptrTo_taskAsyncContext->payment_id_string; // separated from submit_raw_tx_fn so that it can be captured w/o capturing all of args
 		if (returning__payment_id == none) {
 			auto decoded = monero::address_utils::decodedAddress(ptrTo_taskAsyncContext->to_address_string, ptrTo_taskAsyncContext->nettype);
 			if (decoded.did_error) { // would be very strange...

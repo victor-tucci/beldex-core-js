@@ -228,6 +228,7 @@ class MyMoneroCoreBridgeClass extends MyMoneroCoreBridgeEssentialsClass
 			payment_id,
 			priority,
 			fee_per_b, // not kib - if fee_per_kb, /= 1024
+			fee_per_o,
 			fee_mask,
 			unlock_time,
 			nettype,
@@ -289,6 +290,7 @@ class MyMoneroCoreBridgeClass extends MyMoneroCoreBridgeEssentialsClass
 				fee_amount: fee_amount.toString(),
 				priority: "" + priority,
 				fee_per_b: fee_per_b.toString(),
+				fee_per_o: fee_per_o.toString(),
 				fee_mask: fee_mask.toString(),
 				using_outs: sanitary__using_outs,
 				mix_outs: sanitary__mix_outs,

@@ -8,8 +8,6 @@ function(MyMoneroClient) {
 
 
 
-"use strict";
-
 // The Module object: Our interface to the outside world. We import
 // and export values on it. There are various ways Module can be used:
 // 1. Not defined. We create it here
@@ -1194,12 +1192,12 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  350500: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__error(JS__task_id, JS__req_params); },  
- 350726: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__success(JS__task_id, JS__req_params); },  
- 350954: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__get_unspent_outs(JS__task_id, JS__req_params); },  
- 351191: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__get_random_outs(JS__task_id, JS__req_params); },  
- 351427: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__submit_raw_tx(JS__task_id, JS__req_params); },  
- 351661: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__status_update(JS__task_id, JS__req_params); }
+  368924: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__error(JS__task_id, JS__req_params); },  
+ 369150: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__success(JS__task_id, JS__req_params); },  
+ 369378: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__get_unspent_outs(JS__task_id, JS__req_params); },  
+ 369615: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__get_random_outs(JS__task_id, JS__req_params); },  
+ 369851: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__submit_raw_tx(JS__task_id, JS__req_params); },  
+ 370085: ($0, $1) => { const JS__task_id = Module.UTF8ToString($0); const JS__req_params_string = Module.UTF8ToString($1); const JS__req_params = JSON.parse(JS__req_params_string); Module.fromCpp__send_funds__status_update(JS__task_id, JS__req_params); }
 };
 
 
@@ -1366,6 +1364,12 @@ var ASM_CONSTS = {
       exceptionCaught.push(info);
       exception_addRef(info);
       return info.get_exception_ptr();
+    }
+
+  function ___cxa_call_unexpected(exception) {
+      err('Unexpected exception thrown, this is not properly supported - aborting');
+      ABORT = true;
+      throw exception;
     }
 
   var exceptionLast = 0;
@@ -5051,12 +5055,13 @@ var ASM_CONSTS = {
       return ASM_CONSTS[code].apply(null, args);
     }
 
-  function _emscripten_date_now() {
-      return Date.now();
+  function _emscripten_console_error(str) {
+      assert(typeof str == 'number');
+      console.error(UTF8ToString(str));
     }
 
-  function _emscripten_memcpy_big(dest, src, num) {
-      HEAPU8.copyWithin(dest, src, src + num);
+  function _emscripten_date_now() {
+      return Date.now();
     }
 
   function getHeapMax() {
@@ -5066,7 +5071,14 @@ var ASM_CONSTS = {
       // casing all heap size related code to treat 0 specially.
       return 2147483648;
     }
-  
+  function _emscripten_get_heap_max() {
+      return getHeapMax();
+    }
+
+  function _emscripten_memcpy_big(dest, src, num) {
+      HEAPU8.copyWithin(dest, src, src + num);
+    }
+
   var _emscripten_get_now;if (ENVIRONMENT_IS_NODE) {
     _emscripten_get_now = () => {
       var t = process['hrtime']();
@@ -5670,6 +5682,207 @@ var ASM_CONSTS = {
     }
 
 
+  function intArrayToString(array) {
+    var ret = [];
+    for (var i = 0; i < array.length; i++) {
+      var chr = array[i];
+      if (chr > 0xFF) {
+        if (ASSERTIONS) {
+          assert(false, 'Character code ' + chr + ' (' + String.fromCharCode(chr) + ')  at offset ' + i + ' not in 0x00-0xFF.');
+        }
+        chr &= 0xFF;
+      }
+      ret.push(String.fromCharCode(chr));
+    }
+    return ret.join('');
+  }
+
+  function uleb128Encode(n, target) {
+      assert(n < 16384);
+      if (n < 128) {
+        target.push(n);
+      } else {
+        target.push((n % 128) | 128, n >> 7);
+      }
+    }
+  
+  function sigToWasmTypes(sig) {
+      var typeNames = {
+        'i': 'i32',
+        // i64 values will be split into two i32s.
+        'j': 'i32',
+        'f': 'f32',
+        'd': 'f64',
+        'p': 'i32',
+      };
+      var type = {
+        parameters: [],
+        results: sig[0] == 'v' ? [] : [typeNames[sig[0]]]
+      };
+      for (var i = 1; i < sig.length; ++i) {
+        assert(sig[i] in typeNames, 'invalid signature char: ' + sig[i]);
+        type.parameters.push(typeNames[sig[i]]);
+        if (sig[i] === 'j') {
+          type.parameters.push('i32');
+        }
+      }
+      return type;
+    }
+  
+  function generateFuncType(sig, target){
+      var sigRet = sig.slice(0, 1);
+      var sigParam = sig.slice(1);
+      var typeCodes = {
+        'i': 0x7f, // i32
+        'p': 0x7f, // i32
+        'j': 0x7e, // i64
+        'f': 0x7d, // f32
+        'd': 0x7c, // f64
+      };
+    
+      // Parameters, length + signatures
+      target.push(0x60 /* form: func */);
+      uleb128Encode(sigParam.length, target);
+      for (var i = 0; i < sigParam.length; ++i) {
+        assert(sigParam[i] in typeCodes, 'invalid signature char: ' + sigParam[i]);
+    target.push(typeCodes[sigParam[i]]);
+      }
+    
+      // Return values, length + signatures
+      // With no multi-return in MVP, either 0 (void) or 1 (anything else)
+      if (sigRet == 'v') {
+        target.push(0x00);
+      } else {
+        target.push(0x01, typeCodes[sigRet]);
+      }
+    }
+  function convertJsFunctionToWasm(func, sig) {
+  
+      // If the type reflection proposal is available, use the new
+      // "WebAssembly.Function" constructor.
+      // Otherwise, construct a minimal wasm module importing the JS function and
+      // re-exporting it.
+      if (typeof WebAssembly.Function == "function") {
+        return new WebAssembly.Function(sigToWasmTypes(sig), func);
+      }
+  
+      // The module is static, with the exception of the type section, which is
+      // generated based on the signature passed in.
+      var typeSectionBody = [
+        0x01, // count: 1
+      ];
+      generateFuncType(sig, typeSectionBody);
+  
+      // Rest of the module is static
+      var bytes = [
+        0x00, 0x61, 0x73, 0x6d, // magic ("\0asm")
+        0x01, 0x00, 0x00, 0x00, // version: 1
+        0x01, // Type section code
+      ];
+      // Write the overall length of the type section followed by the body
+      uleb128Encode(typeSectionBody.length, bytes);
+      bytes.push.apply(bytes, typeSectionBody);
+  
+      // The rest of the module is static
+      bytes.push(
+        0x02, 0x07, // import section
+          // (import "e" "f" (func 0 (type 0)))
+          0x01, 0x01, 0x65, 0x01, 0x66, 0x00, 0x00,
+        0x07, 0x05, // export section
+          // (export "f" (func 0 (type 0)))
+          0x01, 0x01, 0x66, 0x00, 0x00,
+      );
+  
+      // We can compile this wasm module synchronously because it is very small.
+      // This accepts an import (at "e.f"), that it reroutes to an export (at "f")
+      var module = new WebAssembly.Module(new Uint8Array(bytes));
+      var instance = new WebAssembly.Instance(module, { 'e': { 'f': func } });
+      var wrappedFunc = instance.exports['f'];
+      return wrappedFunc;
+    }
+  
+  function updateTableMap(offset, count) {
+      if (functionsInTableMap) {
+        for (var i = offset; i < offset + count; i++) {
+          var item = getWasmTableEntry(i);
+          // Ignore null values.
+          if (item) {
+            functionsInTableMap.set(item, i);
+          }
+        }
+      }
+    }
+  
+  var functionsInTableMap = undefined;
+  
+  var freeTableIndexes = [];
+  function getEmptyTableSlot() {
+      // Reuse a free index if there is one, otherwise grow.
+      if (freeTableIndexes.length) {
+        return freeTableIndexes.pop();
+      }
+      // Grow the table
+      try {
+        wasmTable.grow(1);
+      } catch (err) {
+        if (!(err instanceof RangeError)) {
+          throw err;
+        }
+        throw 'Unable to grow wasm table. Set ALLOW_TABLE_GROWTH.';
+      }
+      return wasmTable.length - 1;
+    }
+  
+  function setWasmTableEntry(idx, func) {
+      wasmTable.set(idx, func);
+      // With ABORT_ON_WASM_EXCEPTIONS wasmTable.get is overriden to return wrapped
+      // functions so we need to call it here to retrieve the potential wrapper correctly
+      // instead of just storing 'func' directly into wasmTableMirror
+      wasmTableMirror[idx] = wasmTable.get(idx);
+    }
+  /** @param {string=} sig */
+  function addFunction(func, sig) {
+      assert(typeof func != 'undefined');
+  
+      // Check if the function is already in the table, to ensure each function
+      // gets a unique index. First, create the map if this is the first use.
+      if (!functionsInTableMap) {
+        functionsInTableMap = new WeakMap();
+        updateTableMap(0, wasmTable.length);
+      }
+      if (functionsInTableMap.has(func)) {
+        return functionsInTableMap.get(func);
+      }
+  
+      // It's not in the table, add it now.
+  
+      // Make sure functionsInTableMap is actually up to date, that is, that this
+      // function is not actually in the wasm Table despite not being tracked in
+      // functionsInTableMap.
+      for (var i = 0; i < wasmTable.length; i++) {
+        assert(getWasmTableEntry(i) != func, 'function in Table but not functionsInTableMap');
+      }
+  
+      var ret = getEmptyTableSlot();
+  
+      // Set the new value.
+      try {
+        // Attempting to call this with JS function will cause of table.set() to fail
+        setWasmTableEntry(ret, func);
+      } catch (err) {
+        if (!(err instanceof TypeError)) {
+          throw err;
+        }
+        assert(typeof sig != 'undefined', 'Missing signature argument to addFunction: ' + func);
+        var wrapped = convertJsFunctionToWasm(func, sig);
+        setWasmTableEntry(ret, wrapped);
+      }
+  
+      functionsInTableMap.set(func, ret);
+  
+      return ret;
+    }
+
   var FSNode = /** @constructor */ function(parent, name, mode, rdev) {
     if (!parent) {
       parent = this;  // root node sets parent to itself
@@ -5853,6 +6066,7 @@ var asmLibraryArg = {
   "__assert_fail": ___assert_fail,
   "__cxa_allocate_exception": ___cxa_allocate_exception,
   "__cxa_begin_catch": ___cxa_begin_catch,
+  "__cxa_call_unexpected": ___cxa_call_unexpected,
   "__cxa_end_catch": ___cxa_end_catch,
   "__cxa_find_matching_catch_2": ___cxa_find_matching_catch_2,
   "__cxa_find_matching_catch_3": ___cxa_find_matching_catch_3,
@@ -5879,7 +6093,9 @@ var asmLibraryArg = {
   "_tzset_js": __tzset_js,
   "abort": _abort,
   "emscripten_asm_const_int": _emscripten_asm_const_int,
+  "emscripten_console_error": _emscripten_console_error,
   "emscripten_date_now": _emscripten_date_now,
+  "emscripten_get_heap_max": _emscripten_get_heap_max,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
   "emscripten_resize_heap": _emscripten_resize_heap,
   "environ_get": _environ_get,
@@ -5910,6 +6126,7 @@ var asmLibraryArg = {
   "invoke_viiiiiii": invoke_viiiiiii,
   "invoke_viiiiiiiiii": invoke_viiiiiiiiii,
   "invoke_viiiiiiiiiiiiiii": invoke_viiiiiiiiiiiiiii,
+  "invoke_viijii": invoke_viijii,
   "strftime_l": _strftime_l
 };
 var asm = createWasm();
@@ -5923,10 +6140,13 @@ var _malloc = Module["_malloc"] = createExportWrapper("malloc");
 var _main = Module["_main"] = createExportWrapper("main");
 
 /** @type {function(...*):?} */
-var ___errno_location = Module["___errno_location"] = createExportWrapper("__errno_location");
+var ___cxa_demangle = Module["___cxa_demangle"] = createExportWrapper("__cxa_demangle");
 
 /** @type {function(...*):?} */
 var _free = Module["_free"] = createExportWrapper("free");
+
+/** @type {function(...*):?} */
+var ___errno_location = Module["___errno_location"] = createExportWrapper("__errno_location");
 
 /** @type {function(...*):?} */
 var ___getTypeName = Module["___getTypeName"] = createExportWrapper("__getTypeName");
@@ -5976,9 +6196,6 @@ var stackRestore = Module["stackRestore"] = createExportWrapper("stackRestore");
 var stackAlloc = Module["stackAlloc"] = createExportWrapper("stackAlloc");
 
 /** @type {function(...*):?} */
-var ___cxa_demangle = Module["___cxa_demangle"] = createExportWrapper("__cxa_demangle");
-
-/** @type {function(...*):?} */
 var ___cxa_can_catch = Module["___cxa_can_catch"] = createExportWrapper("__cxa_can_catch");
 
 /** @type {function(...*):?} */
@@ -5989,6 +6206,9 @@ var ___set_stack_limits = Module["___set_stack_limits"] = createExportWrapper("_
 
 /** @type {function(...*):?} */
 var dynCall_iij = Module["dynCall_iij"] = createExportWrapper("dynCall_iij");
+
+/** @type {function(...*):?} */
+var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
 
 /** @type {function(...*):?} */
 var dynCall_iiiij = Module["dynCall_iiiij"] = createExportWrapper("dynCall_iiiij");
@@ -6006,14 +6226,22 @@ var dynCall_jiiii = Module["dynCall_jiiii"] = createExportWrapper("dynCall_jiiii
 var dynCall_jiji = Module["dynCall_jiji"] = createExportWrapper("dynCall_jiji");
 
 /** @type {function(...*):?} */
-var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
-
-/** @type {function(...*):?} */
 var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = createExportWrapper("dynCall_iiiiijj");
 
 /** @type {function(...*):?} */
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = createExportWrapper("dynCall_iiiiiijj");
 
+
+function invoke_vii(index,a1,a2) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1,a2);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
 
 function invoke_ii(index,a1) {
   var sp = stackSave();
@@ -6030,17 +6258,6 @@ function invoke_iii(index,a1,a2) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2);
-  } catch(e) {
-    stackRestore(sp);
-    if (e !== e+0) throw e;
-    _setThrew(1, 0);
-  }
-}
-
-function invoke_vii(index,a1,a2) {
-  var sp = stackSave();
-  try {
-    getWasmTableEntry(index)(a1,a2);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6081,10 +6298,10 @@ function invoke_viiiiii(index,a1,a2,a3,a4,a5,a6) {
   }
 }
 
-function invoke_iiiiii(index,a1,a2,a3,a4,a5) {
+function invoke_iiii(index,a1,a2,a3) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3,a4,a5);
+    return getWasmTableEntry(index)(a1,a2,a3);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6092,10 +6309,10 @@ function invoke_iiiiii(index,a1,a2,a3,a4,a5) {
   }
 }
 
-function invoke_iiii(index,a1,a2,a3) {
+function invoke_iiiiii(index,a1,a2,a3,a4,a5) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1,a2,a3);
+    return getWasmTableEntry(index)(a1,a2,a3,a4,a5);
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;
@@ -6213,6 +6430,17 @@ function invoke_iiiii(index,a1,a2,a3,a4) {
   }
 }
 
+function invoke_viijii(index,a1,a2,a3,a4,a5,a6) {
+  var sp = stackSave();
+  try {
+    dynCall_viijii(index,a1,a2,a3,a4,a5,a6);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
 function invoke_iiiiij(index,a1,a2,a3,a4,a5,a6) {
   var sp = stackSave();
   try {
@@ -6253,11 +6481,14 @@ function invoke_jiiii(index,a1,a2,a3,a4) {
 
 Module["UTF8ToString"] = UTF8ToString;
 Module["stringToUTF8"] = stringToUTF8;
+Module["lengthBytesUTF8"] = lengthBytesUTF8;
+Module["getTempRet0"] = getTempRet0;
+Module["addFunction"] = addFunction;
+Module["intArrayToString"] = intArrayToString;
 var unexportedRuntimeSymbols = [
   'run',
   'UTF8ArrayToString',
   'stringToUTF8Array',
-  'lengthBytesUTF8',
   'addOnPreRun',
   'addOnInit',
   'addOnPreMain',
@@ -6288,7 +6519,6 @@ var unexportedRuntimeSymbols = [
   'stackAlloc',
   'stackSave',
   'stackRestore',
-  'getTempRet0',
   'setTempRet0',
   'writeStackCookie',
   'checkStackCookie',
@@ -6359,7 +6589,6 @@ var unexportedRuntimeSymbols = [
   'functionsInTableMap',
   'getEmptyTableSlot',
   'updateTableMap',
-  'addFunction',
   'removeFunction',
   'reallyNegative',
   'unSign',
@@ -6371,7 +6600,6 @@ var unexportedRuntimeSymbols = [
   'PATH',
   'PATH_FS',
   'intArrayFromString',
-  'intArrayToString',
   'AsciiToString',
   'stringToAscii',
   'UTF16Decoder',
@@ -6444,6 +6672,7 @@ var unexportedRuntimeSymbols = [
   'checkWasiClock',
   'doReadv',
   'doWritev',
+  'dlopenMissingError',
   'createDyncallWrapper',
   'setImmediateWrapped',
   'clearImmediateWrapped',
@@ -6467,6 +6696,36 @@ var unexportedRuntimeSymbols = [
   'PIPEFS',
   'SOCKFS',
   '_setNetworkCallback',
+  'tempFixedLengthArray',
+  'miniTempWebGLFloatBuffers',
+  'heapObjectForWebGLType',
+  'heapAccessShiftForWebGLHeap',
+  'GL',
+  'emscriptenWebGLGet',
+  'computeUnpackAlignedImageSize',
+  'emscriptenWebGLGetTexPixelData',
+  'emscriptenWebGLGetUniform',
+  'webglGetUniformLocation',
+  'webglPrepareUniformLocationsBeforeFirstUse',
+  'webglGetLeftBracePos',
+  'emscriptenWebGLGetVertexAttrib',
+  'writeGLArray',
+  'AL',
+  'SDL_unicode',
+  'SDL_ttfContext',
+  'SDL_audio',
+  'SDL',
+  'SDL_gfx',
+  'GLUT',
+  'EGL',
+  'GLFW_Window',
+  'GLFW',
+  'GLEW',
+  'IDBStore',
+  'runAndAbortIfError',
+  'ALLOC_NORMAL',
+  'ALLOC_STACK',
+  'allocate',
   'InternalError',
   'BindingError',
   'UnboundTypeError',
@@ -6600,20 +6859,12 @@ var missingLibrarySymbols = [
   'getCFunc',
   'ccall',
   'cwrap',
-  'uleb128Encode',
-  'sigToWasmTypes',
-  'generateFuncType',
-  'convertJsFunctionToWasm',
-  'getEmptyTableSlot',
-  'updateTableMap',
-  'addFunction',
   'removeFunction',
   'reallyNegative',
   'unSign',
   'strLen',
   'reSign',
   'formatString',
-  'intArrayToString',
   'AsciiToString',
   'stringToAscii',
   'allocateUTF8OnStack',
@@ -6673,6 +6924,25 @@ var missingLibrarySymbols = [
   'getExceptionMessage',
   'setMainLoop',
   '_setNetworkCallback',
+  'heapObjectForWebGLType',
+  'heapAccessShiftForWebGLHeap',
+  'emscriptenWebGLGet',
+  'computeUnpackAlignedImageSize',
+  'emscriptenWebGLGetTexPixelData',
+  'emscriptenWebGLGetUniform',
+  'webglGetUniformLocation',
+  'webglPrepareUniformLocationsBeforeFirstUse',
+  'webglGetLeftBracePos',
+  'emscriptenWebGLGetVertexAttrib',
+  'writeGLArray',
+  'SDL_unicode',
+  'SDL_ttfContext',
+  'SDL_audio',
+  'GLFW_Window',
+  'runAndAbortIfError',
+  'ALLOC_NORMAL',
+  'ALLOC_STACK',
+  'allocate',
   'init_embind',
   'getBasestPointer',
   'registerInheritedInstance',

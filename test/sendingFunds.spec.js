@@ -110,7 +110,8 @@ class Fetch
 							]
 						} // NOTE: we'd have more in the real reply - and even the api response parser doesn't care about those values right now
 					],
-					per_byte_fee: "24658",
+					per_byte_fee: "666",
+					fee_per_output: "100000",
 					fee_mask: "10000",
 					fork_version: 10
 					/*deprecated*/// per_kb_fee: parseInt("24658"/*for str search*/) * 1024 // scale the per b we know up to per kib (so it can be scaled back down - interrim until all clients are ready for per b fee)

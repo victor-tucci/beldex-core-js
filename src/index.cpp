@@ -163,10 +163,10 @@ string validate_components_for_login(const string address, const string privateV
     }
 }
 //
-string estimated_tx_network_fee(const string priority, const string feePerb, const string forkVersion)
+string estimated_tx_network_fee(const string priority, const string feePerb,const string feePero, const string forkVersion)
 {
     try {
-        return serial_bridge::estimated_tx_network_fee(priority, feePerb, forkVersion);
+        return serial_bridge::estimated_tx_network_fee(priority, feePerb,feePero, forkVersion);
     } catch (std::exception &e) {
         return serial_bridge_utils::error_ret_json_from_message(e.what());
     }

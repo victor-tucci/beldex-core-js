@@ -254,13 +254,16 @@ class MyMoneroCoreBridgeEssentialsClass
 		}
 		return ret.retVal;
 	}
-	estimated_tx_network_fee(fee_per_kb__string, priority, optl__fee_per_b_string, optl__fork_version) // this is until we switch the server over to fee per b
+	estimated_tx_network_fee(fee_per_kb__string, priority, optl__fee_per_b_string,optl__fee_per_o_string, optl__fork_version) // this is until we switch the server over to fee per b
 	{ // TODO update this API to take object rather than arg list
 		const args =
 		{
 			fee_per_b: typeof optl__fee_per_b_string !== undefined && optl__fee_per_b_string != null 
 				? optl__fee_per_b_string 
-				: (new JSBigInt(fee_per_kb__string)).divide(1024).toString()/*kib -> b*/, 
+				: (new JSBigInt(fee_per_kb__string)).divide(1024).toString()/*kib -> b*/,
+			fee_per_o: typeof optl__fee_per_o_string !== undefined && optl__fee_per_o_string != null 
+				? optl__fee_per_o_string 
+				: (new JSBigInt(fee_per_kb__string)).divide(1024).toString()/*kib -> b*/,
 			priority: "" + priority,
 		};
 		if (typeof optl__fork_version !== 'undefined' && optl__fork_version !== null) {
@@ -270,7 +273,7 @@ class MyMoneroCoreBridgeEssentialsClass
 			args.fork_version = "0"
 			
 		}
-		const ret_string = this.Module.estimated_tx_network_fee(args.priority, args.fee_per_b, args.fork_version);
+		const ret_string = this.Module.estimated_tx_network_fee(args.priority, args.fee_per_b,args.fee_per_o, args.fork_version);
 		const ret = JSON.parse(ret_string);
 		if (typeof ret.err_msg !== 'undefined' && ret.err_msg) {
 			throw ret.err_msg; // TODO: maybe return this somehow

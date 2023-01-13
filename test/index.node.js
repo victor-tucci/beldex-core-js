@@ -46,7 +46,7 @@ async function t1()
 
 	try {
 		var fee = new mymonero.JSBigInt((await mymonero.monero_utils_promise).estimated_tx_network_fee(
-			"0", 1, "24658", 10
+			"0", 1, "666","100000", 17
 			// fee_per_kb__string, priority, fee_per_b__string, optl__fork_version
 		));
 		console.log("estimated_tx_network_fee", mymonero.monero_amount_format_utils.formatMoneyFull(fee), "XMR")

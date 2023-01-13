@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-enum-constexpr-conversion")
-add_compile_definitions(MYMONERO_CORE_CUSTOM)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+add_compile_definitions(BELDEX_CORE_CUSTOM)
 
 project(MyMoneroCoreCpp)
 #
@@ -9,13 +9,15 @@ project(MyMoneroCoreCpp)
 include_directories("src")
 include_directories("node_modules")
 #
-set(MYMONERO_CORE_CPP "node_modules/@mymonero/mymonero-core-cpp")
-set(MONERO_SRC "node_modules/@mymonero/mymonero-core-custom")
+set(MYMONERO_CORE_CPP "node_modules/@mymonero/beldex-core-cpp")
+set(MONERO_SRC "node_modules/@mymonero/beldex-core-custom")
 set(MYMONERO_CORE_CPP_SRC "${MYMONERO_CORE_CPP}/src")
 include_directories("${MYMONERO_CORE_CPP}/src")
 #
 #set(MONERO_SRC "${MYMONERO_CUSTOM_CPP}/contrib/monero-core-custom")
 include_directories(${MONERO_SRC})
+include_directories("${MONERO_SRC}/external")
+include_directories("${MONERO_SRC}/external/loki-mq")
 include_directories("${MONERO_SRC}/epee/include")
 include_directories("${MONERO_SRC}/common")
 include_directories("${MONERO_SRC}/vtlogger")
@@ -63,15 +65,19 @@ set(
     ${MYMONERO_CORE_CPP_SRC}/tools__ret_vals.hpp
     ${MYMONERO_CORE_CPP_SRC}/tools__ret_vals.cpp
     #
+    ${MONERO_SRC}/cryptonote_basic/account.cpp
     ${MONERO_SRC}/cryptonote_basic/cryptonote_basic.h
     ${MONERO_SRC}/cryptonote_basic/cryptonote_basic_impl.h
     ${MONERO_SRC}/cryptonote_basic/cryptonote_basic_impl.cpp
-    ${MONERO_SRC}/cryptonote_basic/cryptonote_format_utils.cpp
-    ${MONERO_SRC}/cryptonote_basic/cryptonote_format_utils_basic.cpp
     ${MONERO_SRC}/cryptonote_basic/cryptonote_format_utils.h
-    ${MONERO_SRC}/cryptonote_basic/account.cpp
+    ${MONERO_SRC}/cryptonote_basic/cryptonote_format_utils.cpp
+    ${MONERO_SRC}/cryptonote_basic/cryptonote_basic.cpp
     ${MONERO_SRC}/crypto/crypto.cpp
     ${MONERO_SRC}/crypto/hash.c
+    ${MONERO_SRC}/crypto/cn_heavy_hash_hard_arm.cpp
+    ${MONERO_SRC}/crypto/cn_heavy_hash_hard_intel.cpp
+    ${MONERO_SRC}/crypto/cn_heavy_hash_soft.cpp
+    ${MONERO_SRC}/crypto/cn_turtle_hash.c
     ${MONERO_SRC}/crypto/slow-hash-dummied.cpp
     ${MONERO_SRC}/crypto/oaes_lib.c
     ${MONERO_SRC}/crypto/crypto-ops.c
@@ -94,8 +100,11 @@ set(
     ${MONERO_SRC}/common/threadpool.cpp
     ${MONERO_SRC}/common/aligned.c
     ${MONERO_SRC}/common/util.cpp
+    ${MONERO_SRC}/common/i18n.cpp
+    ${MONERO_SRC}/common/string_util.cpp
     ${MONERO_SRC}/epee/src/hex.cpp
     ${MONERO_SRC}/epee/src/string_tools.cpp
+    ${MONERO_SRC}/epee/src/portable_storage.cpp
     ${MONERO_SRC}/epee/src/memwipe.c
     ${MONERO_SRC}/epee/src/mlocker.cpp
     ${MONERO_SRC}/epee/src/wipeable_string.cpp
@@ -106,7 +115,6 @@ set(
     ${MONERO_SRC}/ringct/rctCryptoOps.c
     ${MONERO_SRC}/ringct/rctSigs.cpp
     ${MONERO_SRC}/ringct/bulletproofs.cc
-    ${MONERO_SRC}/ringct/bulletproofs_plus.cc
     ${MONERO_SRC}/ringct/multiexp.cc
     ${MONERO_SRC}/mnemonics/electrum-words.cpp
     ${MONERO_SRC}/vtlogger/logger.cpp
@@ -119,7 +127,7 @@ set (EMCC_LINKER_FLAGS__WASM
 -std=c++11 \
 -flto \
 --bind \
--s STRICT=1 \
+-s STRICT=0 \
 -s MODULARIZE=1 \
 -s 'EXPORT_NAME=\"MyMoneroClient\"' \
 -s WASM=1 \
@@ -130,8 +138,10 @@ set (EMCC_LINKER_FLAGS__WASM
 -s NODEJS_CATCH_EXIT=1 \
 -s NODEJS_CATCH_REJECTION=0 \
 -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
--s EXPORTED_RUNTIME_METHODS='[\"UTF8ToString\",\"stringToUTF8\"]' \
+-s LLD_REPORT_UNDEFINED \
+-s RESERVED_FUNCTION_POINTERS=5 \
 -O3 \
+-s EXPORTED_RUNTIME_METHODS='[\"UTF8ToString\",\"stringToUTF8\",\"lengthBytesUTF8\",\"intArrayToString\",\"getTempRet0\",\"addFunction\"]' \
 --source-map-base ${CMAKE_CURRENT_LIST_DIR}/sourcemap \
 --memory-init-file 1 \
 ")  
